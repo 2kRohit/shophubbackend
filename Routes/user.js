@@ -1,7 +1,34 @@
-const express = require("express");
+const mongoose = require('mongoose');
+const express = require('express');
 const router = express.Router();
-const User = require("../Models/user");
-const bcrypt = require("bcryptjs");
+const User = require('../Models/user');
+
+// Middleware to validate ObjectId
+const isValidObjectId = mongoose.isValidObjectId;
+
+router.get('/userdetail/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    // Use your User model to find the user by their ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return the user details as JSON
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error getting user:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 router.post("/reguser", async (req, res) => {
   try {
@@ -11,9 +38,6 @@ router.post("/reguser", async (req, res) => {
     if (trade === "sell") {
       role = "seller";
     }
-    // else {
-    //   role = "user";
-    // }
 
     const user = new User({ name, email, password, trade, role });
 
@@ -26,33 +50,24 @@ router.post("/reguser", async (req, res) => {
   }
 });
 
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  router.post('/login', async (req, res) => {
-    try {
-    
-      const { email,password } = req.body;
-      console.log("data : ",req.body)
-      const user = await User.findOne({ email });
-      if (!user) {
-        console.log("id mismatch")
-        return res.status(500).json({error: "Email mismatch!"});
-      }
-      else{
-        console.log("id matched",user);
-        const matched = await user.comparePassword(password);
-        if (!matched) return res.status(401).json({error: "Password mismatch!"});
-        if (matched) return res.json( user);
-      }
-      
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(500).json({error: "Email mismatch!"});
+    } else {
+      const matched = await user.comparePassword(password);
+      if (!matched) return res.status(401).json({error: "Password mismatch!"});
+      if (matched) return res.json(user);
     }
-    catch (error) {
-        console.error('Server Error', error);
-        return res.status(500).json({error: " server error "});
-
-      }
-
-    });
-
+  } catch (error) {
+    console.error('Server Error', error);
+    return res.status(500).json({error: " server error "});
+  }
+});
     router.get('/getdetail/:userid',async(req,res)=>{
       try{
           const {userid} =req.params;
