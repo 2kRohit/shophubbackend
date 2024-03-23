@@ -1,32 +1,35 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const { connectToMongoDB } = require("./Db/index");
+
+const userRouter = require("./Routes/user");
+const productRouter = require("./Routes/products");
+const reviewRouter = require("./Routes/review");
+const wishlistRouter = require("./Routes/wishlist");
+const cartRouter = require("./Routes/cart");
+const orderRouter = require("./Routes/order");
+const transactionRouter = require("./Routes/transaction");
+const profileRouter = require('./Routes/profile');
 
 const app = express();
-const http = require('http').Server(app);
-
-const db = require("./Db/index");
+const PORT = process.env.PORT || 8000;
 
 app.use(cors());
 app.use(express.json());
 
-db.getDb();
+// Call the connectToMongoDB function to establish the MongoDB connection
+connectToMongoDB();
 
-app.get("/", (req, res) => {
-  res.send("Hello, MongoDB and Express!");
-});
-
-const userRouter = require("./Routes/user");
+// Routes
 app.use("/api/user", userRouter);
-
-const productRouter = require("./Routes/products");
-app.use("/api/products",productRouter);
-
-const reviewRouter = require("./Routes/review");
+app.use("/api/products", productRouter);
 app.use("/api/review", reviewRouter);
+app.use("/api/wishlist", wishlistRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/order", orderRouter);
+app.use("/api/transaction", transactionRouter);
+app.use("/api/profile", profileRouter);
 
-const PORT = process.env.PORT || 8000;
-
-http.listen(PORT, () => {
-  console.log(`The server is listening on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
